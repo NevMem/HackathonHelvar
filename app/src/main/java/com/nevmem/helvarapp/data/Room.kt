@@ -1,4 +1,3 @@
 package com.nevmem.helvarapp.data
 
-class Room {
-}
+data class Room(val name: String, val imageId: Int)

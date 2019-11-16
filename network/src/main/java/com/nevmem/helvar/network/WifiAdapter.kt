@@ -2,6 +2,7 @@ package com.nevmem.helvar.network
 
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.concurrent.TimeUnit
@@ -17,9 +18,12 @@ class WifiAdapter(ctx: Context) {
 
     interface WifiAdapterListener {
         fun wifiInfoChanged() {}
+        fun connectedToHome() {}
     }
 
     fun wifiInfo(): WifiState = currentState
+
+    private var prevSSID: String = ""
 
     private val listeners = ArrayList<WifiAdapterListener>()
     fun subscribe(listener: WifiAdapterListener) {
@@ -60,6 +64,13 @@ class WifiAdapter(ctx: Context) {
 
     private fun proceedChange(newState: WifiState) {
         currentState = newState
+        Log.d("debug", "${currentState.ssid.toLowerCase().trim()} ${prevSSID.toLowerCase().trim()}")
+        if (currentState.ssid.toLowerCase().trim() == "\"junction\"" && prevSSID.toLowerCase().trim() != "\"junction\"") {
+            listeners.forEach {
+                it.connectedToHome()
+            }
+        }
+        prevSSID = currentState.ssid
         listeners.forEach {
             it.wifiInfoChanged()
         }

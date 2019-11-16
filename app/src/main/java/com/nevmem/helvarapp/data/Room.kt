@@ -15,6 +15,26 @@ class Room(val name: String) {
         recalcMode()
     }
 
+    val roomId: String
+    get () {
+        return when (name.toLowerCase()) {
+            "living room" -> "0"
+            "entrance" -> "1"
+            "kitchen" -> "2"
+            else -> "3"
+        }
+    }
+
+    val roomName: String
+    get() {
+        return when (name.toLowerCase()) {
+            "living room" -> "living"
+            "entrance" -> "entrance"
+            "kitchen" -> "kitchen"
+            else -> "fuck"
+        }
+    }
+
     val wifiProfile = ArrayList<Pair<String, Double>>()
 
     fun calculateProfileSimilarity(profile: List<Pair<String, Double>>): Double {

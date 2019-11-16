@@ -5,6 +5,8 @@ import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +15,8 @@ import android.widget.SeekBar
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.nevmem.helvar.network.BackendNetworkService
+import com.nevmem.helvar.network.WifiAdapter
 import com.nevmem.helvarapp.activities.AddRoomActivity
 import com.nevmem.helvarapp.activities.SmartModeActivity
 import com.nevmem.helvarapp.data.Room
@@ -20,6 +24,8 @@ import com.nevmem.helvarapp.data.RoomRepository
 import com.nevmem.helvarapp.permissions.ListenableActivity
 import com.nevmem.helvarapp.permissions.Permission
 import com.nevmem.helvarapp.permissions.PermissionManager
+import com.nevmem.helvarapp.utils.delayedOnUI
+import com.nevmem.helvarapp.utils.infiniteTry
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.room_page.view.*
 import kotlinx.android.synthetic.main.start_activity.*
@@ -30,12 +36,27 @@ interface PagePickerListener {
     fun nextPageCalled()
 }
 
-class StartActivity : ListenableActivity(), PagePickerListener {
+class StartActivity : ListenableActivity(), PagePickerListener, WifiAdapter.WifiAdapterListener {
     @Inject
     lateinit var roomRepository: RoomRepository
 
+    @Inject
+    lateinit var backendNetworkService: BackendNetworkService
+
+    @Inject
+    lateinit var wifiAdapter: WifiAdapter
+
     private var canAddRoom = false
     private var roomsCount = 0
+
+    lateinit var pagerAdapter: PagerAdapter
+
+    override fun connectedToHome() {
+        Log.d("debug", "connectedToHome")
+        delayedOnUI(100) {
+            backendNetworkService.switchOnEntrance()
+        }
+    }
 
     @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,13 +73,19 @@ class StartActivity : ListenableActivity(), PagePickerListener {
             .subscribe {
                 Log.d("Debug", "Received new rooms array")
                 roomsCount = it.size
-                pager.adapter = PagerAdapter(this, it)
+                pagerAdapter = PagerAdapter(this, it, backendNetworkService)
+                pager.adapter = pagerAdapter
             }
 
         roomRepository.currentRoom
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                Toast.makeText(this, it.name, Toast.LENGTH_LONG).show()
+                Log.d("debug", "currentRoomUpdated ${it.name}")
+                // Toast.makeText(this, it.name, Toast.LENGTH_LONG).show()
+                val index = pagerAdapter.indexOf(it)
+                if (index != -1) {
+                    pager.currentItem = index
+                }
             }
 
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -91,6 +118,18 @@ class StartActivity : ListenableActivity(), PagePickerListener {
                 canAddRoom = true
             }
         }
+
+        wifiAdapter.subscribe(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        wifiAdapter.scanner.stopScanning()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        wifiAdapter.scanner.startScanning()
     }
 
     private fun gotoSmartModePage() {
@@ -133,7 +172,10 @@ class StartActivity : ListenableActivity(), PagePickerListener {
 
     class PagerAdapter(
             private val ctx: Context,
-            private val rooms: List<Room>) : RecyclerView.Adapter<PagerAdapter.VH>() {
+            private val rooms: List<Room>,
+            private val backendNetworkService: BackendNetworkService) : RecyclerView.Adapter<PagerAdapter.VH>() {
+
+        fun indexOf(room: Room) = rooms.indexOf(room)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val inflater = LayoutInflater.from(ctx)
@@ -142,9 +184,6 @@ class StartActivity : ListenableActivity(), PagePickerListener {
         }
 
         override fun getItemCount(): Int {
-            //if (rooms.isEmpty()) {
-            //    return 1
-            //}
             return rooms.size
         }
 
@@ -171,7 +210,9 @@ class StartActivity : ListenableActivity(), PagePickerListener {
                 }
 
                 override fun onStartTrackingTouch(p0: SeekBar?) {}
-                override fun onStopTrackingTouch(p0: SeekBar?) {}
+                override fun onStopTrackingTouch(p0: SeekBar?) {
+                    updateLight(room)
+                }
             })
 
             holder.brightness.progress = room.brightness
@@ -181,8 +222,15 @@ class StartActivity : ListenableActivity(), PagePickerListener {
                 }
 
                 override fun onStartTrackingTouch(p0: SeekBar?) {}
-                override fun onStopTrackingTouch(p0: SeekBar?) {}
+                override fun onStopTrackingTouch(p0: SeekBar?) {
+                    updateLight(room)
+                }
             })
+        }
+
+        fun updateLight(room: Room) {
+            Log.d("debug", "${room.brightness} ${room.temperature}")
+            backendNetworkService.remoteControl(room.roomId, room.brightness, room.temperature)
         }
 
         class VH(view: View) : RecyclerView.ViewHolder(view) {

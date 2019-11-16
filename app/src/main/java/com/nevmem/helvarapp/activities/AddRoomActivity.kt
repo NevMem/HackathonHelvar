@@ -116,7 +116,6 @@ class AddRoomActivity : ListenableActivity() {
 
     override fun onPause() {
         super.onPause()
-        wifiAdapter.scanner.stopScanning()
         if (!listUpdater.isDisposed) {
             listUpdater.dispose()
         }

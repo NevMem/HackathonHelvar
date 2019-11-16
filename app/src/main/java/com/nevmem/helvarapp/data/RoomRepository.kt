@@ -1,6 +1,7 @@
 package com.nevmem.helvarapp.data
 
 import android.util.Log
+import com.nevmem.helvar.network.BackendNetworkService
 import com.nevmem.helvar.network.WifiAdapter
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -11,11 +12,13 @@ import javax.inject.Singleton
 import kotlin.collections.ArrayList
 
 @Singleton
-class RoomRepository @Inject constructor(private val wifiAdapter: WifiAdapter) {
+class RoomRepository @Inject constructor(private val wifiAdapter: WifiAdapter, backendNetworkService: BackendNetworkService) {
     private var rooms = ArrayList<Room>()
 
     val currentRoom = BehaviorSubject.create<Room>()
     val allRooms = BehaviorSubject.create<List<Room>>()
+
+    private var prevRoom = Room("none")
 
     init {
         Observable.combineLatest(
@@ -28,7 +31,13 @@ class RoomRepository @Inject constructor(private val wifiAdapter: WifiAdapter) {
                 it.second
                     .minBy { room -> room.calculateProfileSimilarity(
                         it.first.map { Pair(it.second, it.first.toDouble()) }) }
-                    ?.let { room -> currentRoom.onNext(room) }
+                    ?.let { room -> run {
+                        currentRoom.onNext(room)
+                        if (prevRoom.name != room.name) {
+                            backendNetworkService.move(prevRoom.roomName, room.roomName)
+                        }
+                        prevRoom = room
+                    }}
             }
 
     }

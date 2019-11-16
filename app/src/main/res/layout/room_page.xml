@@ -4,18 +4,21 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingStart="48dp"
-    android:paddingEnd="48dp">
+    android:paddingEnd="48dp"
+    android:clipToPadding="false">
 
     <TextView
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="110dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:padding="16dp"
-        android:textSize="26sp"
+        android:textSize="36sp"
+        android:textColor="@android:color/black"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/headingText" />
+        android:id="@+id/headingText"
+        android:fontFamily="@font/roboto_bold" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/imageContainer"
@@ -23,7 +26,7 @@
         android:layout_width="match_parent"
         android:padding="8dp"
         android:orientation="horizontal"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="9dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headingText"
@@ -34,6 +37,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            android:adjustViewBounds="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/roomImage" />
@@ -44,6 +48,8 @@
         android:id="@+id/mode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/roboto"
+        android:textSize="22sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imageContainer" />
@@ -53,16 +59,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="@dimen/seek_bar_vertical_padding"
+        android:paddingBottom="@dimen/seek_bar_vertical_padding"
         android:gravity="center_vertical"
         app:layout_constraintTop_toBottomOf="@id/mode"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:clipToPadding="false">
         <SeekBar
             android:id="@+id/brightness"
-            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:scaleType="fitCenter"
+            android:layout_width="@dimen/seek_bar_icons_size"
+            android:layout_height="@dimen/seek_bar_icons_size"
+            android:src="@drawable/bulb" />
     </LinearLayout>
 
     <LinearLayout
@@ -70,16 +83,51 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="@dimen/seek_bar_vertical_padding"
+        android:paddingBottom="@dimen/seek_bar_vertical_padding"
         android:gravity="center_vertical"
         app:layout_constraintTop_toBottomOf="@id/brightnessContainer"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:clipToPadding="false">
         <SeekBar
             android:id="@+id/temperature"
-            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_width="0dp"
             android:layout_height="wrap_content" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:scaleType="fitCenter"
+            android:layout_width="@dimen/seek_bar_icons_size"
+            android:layout_height="@dimen/seek_bar_icons_size"
+            android:src="@drawable/temperature" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/checkGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/temperatureContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="parent"
+        android:gravity="center_vertical">
+
+        <androidx.appcompat.widget.AppCompatCheckBox
+            android:id="@+id/sensorCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/checkboxLabel"
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/roboto"
+            android:text="@string/sensor_checkbox_label"
+            android:labelFor="@id/sensorCheckbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

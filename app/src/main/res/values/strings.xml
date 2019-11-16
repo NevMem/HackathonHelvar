@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">HelvarApp</string>
+    <string name="sensor_checkbox_label">Turn on by sensor</string>
 </resources>

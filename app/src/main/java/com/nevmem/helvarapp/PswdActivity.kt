@@ -4,26 +4,29 @@ import android.animation.ValueAnimator
 import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.widget.LinearLayout
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import com.nevmem.helvarapp.permissions.ListenableActivity
+import com.nevmem.helvarapp.permissions.Permission
+import com.nevmem.helvarapp.permissions.PermissionManager
 import com.nevmem.helvarapp.utils.delayedOnUI
 import com.nevmem.helvarapp.view.Dot
 import kotlinx.android.synthetic.main.pswd_activity.*
 
-class PswdActivity : AppCompatActivity() {
+class PswdActivity : ListenableActivity() {
     companion object {
         const val appearanceDuration = 1200L
     }
 
     private var blocked = false
+    private var canUseWifi = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.pswd_activity)
+
+        window.statusBarColor = resources.getColor(R.color.darkAccent)
 
         val inflater = LayoutInflater.from(this)
 
@@ -65,6 +68,17 @@ class PswdActivity : AppCompatActivity() {
             animator.start()
 
             pswdGroupAnchor.addView(it)
+        }
+
+        delayedOnUI(appearanceDuration + 100) {
+            val permissionManager = PermissionManager(this)
+            permissionManager.requestPermissions(listOf(
+                Permission.COARSE_LOCATION, Permission.FINE_LOCATION, Permission.INTERNET)) {
+
+                if (it) {
+                    canUseWifi = true
+                }
+            }
         }
     }
 

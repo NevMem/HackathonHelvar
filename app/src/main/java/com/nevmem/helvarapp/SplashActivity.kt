@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.splash_activity.*
 
 class SplashActivity : AppCompatActivity() {
     companion object {
@@ -17,6 +16,8 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.splash_activity)
 
+        window.statusBarColor = resources.getColor(R.color.white)
+
         Handler(Looper.getMainLooper()).postDelayed({
             goToPswd()
         }, defaultDelay)
@@ -25,6 +26,6 @@ class SplashActivity : AppCompatActivity() {
     private fun goToPswd() {
         startActivity(
             Intent(this, PswdActivity::class.java),
-            ActivityOptions.makeSceneTransitionAnimation(this, appIcon, "appIcon").toBundle())
+            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
     }
 }

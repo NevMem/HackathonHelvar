@@ -1,5 +1,6 @@
 package com.nevmem.helvarapp
 
+import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
@@ -9,14 +10,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.nevmem.helvarapp.activities.AddRoomActivity
 import com.nevmem.helvarapp.activities.SmartModeActivity
 import com.nevmem.helvarapp.data.Room
+import com.nevmem.helvarapp.data.RoomRepository
 import com.nevmem.helvarapp.permissions.ListenableActivity
+import com.nevmem.helvarapp.permissions.Permission
+import com.nevmem.helvarapp.permissions.PermissionManager
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.room_page.view.*
 import kotlinx.android.synthetic.main.start_activity.*
+import javax.inject.Inject
 
 interface PagePickerListener {
     fun prevPageCalled()
@@ -24,11 +31,13 @@ interface PagePickerListener {
 }
 
 class StartActivity : ListenableActivity(), PagePickerListener {
-    private val rooms = listOf(
-        Room("Living room", R.drawable.tv),
-        Room("Kitchen", R.drawable.food),
-        Room("Entrance", R.drawable.walk))
+    @Inject
+    lateinit var roomRepository: RoomRepository
 
+    private var canAddRoom = false
+    private var roomsCount = 0
+
+    @SuppressLint("CheckResult")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.start_activity)
@@ -36,7 +45,21 @@ class StartActivity : ListenableActivity(), PagePickerListener {
         window.statusBarColor = resources.getColor(R.color.white)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 
-        pager.adapter = PagerAdapter(this, rooms)
+        (applicationContext as HelvarApp).appComponent.inject(this)
+
+        roomRepository.allRooms
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Log.d("Debug", "Received new rooms array")
+                roomsCount = it.size
+                pager.adapter = PagerAdapter(this, it)
+            }
+
+        roomRepository.currentRoom
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                Toast.makeText(this, it.name, Toast.LENGTH_LONG).show()
+            }
 
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -60,6 +83,14 @@ class StartActivity : ListenableActivity(), PagePickerListener {
         addButton.setOnClickListener {
             gotoAddRoomPage()
         }
+
+        PermissionManager(this).requestPermissions(listOf(
+            Permission.INTERNET, Permission.FINE_LOCATION,
+            Permission.COARSE_LOCATION, Permission.CHANGE_WIFI_STATE)) {
+            if (it) {
+                canAddRoom = true
+            }
+        }
     }
 
     private fun gotoSmartModePage() {
@@ -69,15 +100,19 @@ class StartActivity : ListenableActivity(), PagePickerListener {
     }
 
     private fun gotoAddRoomPage() {
-        startActivity(
-            Intent(this, AddRoomActivity::class.java),
-            ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+        if (canAddRoom) {
+            startActivity(
+                Intent(this, AddRoomActivity::class.java),
+                ActivityOptions.makeSceneTransitionAnimation(this).toBundle())
+        } else {
+            Toast.makeText(this, R.string.cannotAddRoom, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun checkButtons() {
         val position = pager.currentItem
         prevButton.isEnabled = position != 0
-        nextButton.isEnabled = position != rooms.size - 1
+        nextButton.isEnabled = position != roomsCount - 1
     }
 
     override fun prevPageCalled() {
@@ -87,7 +122,7 @@ class StartActivity : ListenableActivity(), PagePickerListener {
     }
 
     override fun nextPageCalled() {
-        if (pager.currentItem != rooms.size - 1) {
+        if (pager.currentItem != roomsCount - 1) {
             pager.currentItem = pager.currentItem + 1
         }
     }
@@ -106,7 +141,12 @@ class StartActivity : ListenableActivity(), PagePickerListener {
             return VH(view)
         }
 
-        override fun getItemCount(): Int = rooms.size
+        override fun getItemCount(): Int {
+            //if (rooms.isEmpty()) {
+            //    return 1
+            //}
+            return rooms.size
+        }
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val room = rooms[position]

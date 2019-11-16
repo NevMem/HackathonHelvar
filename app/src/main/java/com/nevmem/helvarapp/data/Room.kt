@@ -1,6 +1,8 @@
 package com.nevmem.helvarapp.data
 
-class Room(val name: String, val imageId: Int) {
+import com.nevmem.helvarapp.R
+
+class Room(val name: String) {
     enum class RoomMode {
         RELAX, WORK, SLEEP, CUSTOM
     }
@@ -11,6 +13,31 @@ class Room(val name: String, val imageId: Int) {
             return
         field = value
         recalcMode()
+    }
+
+    val wifiProfile = ArrayList<Pair<String, Double>>()
+
+    fun calculateProfileSimilarity(profile: List<Pair<String, Double>>): Double {
+        val names = wifiProfile.map { it.first }.toHashSet() + profile.map { it.first }.toHashSet()
+        var similarity = 0.0
+        names.forEach { name ->
+            var first = 0.0
+            wifiProfile.find { name == it.first }?.let { first = it.second }
+            var second = 0.0
+            profile.find { name == it.first }?.let { second = it.second }
+            similarity += (first - second) * (first - second)
+        }
+        return similarity
+    }
+
+    val imageId: Int
+    get () {
+        return when (name) {
+            "Kitchen" -> R.drawable.food
+            "Living room" -> R.drawable.tv
+            "Entrance" -> R.drawable.walk
+            else -> R.drawable.family
+        }
     }
 
     var brightness: Int = 50
@@ -24,7 +51,7 @@ class Room(val name: String, val imageId: Int) {
     var mode: RoomMode = RoomMode.CUSTOM
     private set
 
-    var bySensor: Boolean = false
+    var bySensor: Boolean = true
 
     fun modeString(): String {
         return when (mode) {

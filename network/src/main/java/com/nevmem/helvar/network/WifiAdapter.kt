@@ -13,6 +13,7 @@ class WifiAdapter(ctx: Context) {
     }
 
     private val wifiManager = ctx.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    val scanner = WifiScanner(wifiManager, ctx)
 
     interface WifiAdapterListener {
         fun wifiInfoChanged() {}

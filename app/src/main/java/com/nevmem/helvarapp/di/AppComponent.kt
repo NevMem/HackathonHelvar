@@ -7,7 +7,11 @@ import dagger.Component
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [WifiModule::class, NetworkModule::class])
+@Component(modules = [
+    WifiModule::class,
+    NetworkModule::class,
+    DatabaseModule::class,
+    BackgroundModule::class])
 interface AppComponent {
     fun inject(pswdActivity: PswdActivity)
     fun inject(addRoomActivity: AddRoomActivity)

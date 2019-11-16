@@ -1,8 +1,17 @@
 package com.nevmem.helvarapp.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
 import com.nevmem.helvarapp.R
+import com.nevmem.helvarapp.type_converters.ListOfPairTypeConverter
+import com.nevmem.helvarapp.type_converters.RoomModeEnumConverters
 
+@Entity
 class Room(val name: String) {
+    @PrimaryKey(autoGenerate = true)
+    var id: Int = 0
+
     enum class RoomMode {
         RELAX, WORK, SLEEP, CUSTOM
     }
@@ -35,7 +44,8 @@ class Room(val name: String) {
         }
     }
 
-    val wifiProfile = ArrayList<Pair<String, Double>>()
+    @TypeConverters(ListOfPairTypeConverter::class)
+    var wifiProfile = ArrayList<Pair<String, Double>>()
 
     fun calculateProfileSimilarity(profile: List<Pair<String, Double>>): Double {
         val names = wifiProfile.map { it.first }.toHashSet() + profile.map { it.first }.toHashSet()
@@ -68,8 +78,8 @@ class Room(val name: String) {
         recalcMode()
     }
 
+    @TypeConverters(RoomModeEnumConverters::class)
     var mode: RoomMode = RoomMode.CUSTOM
-    private set
 
     var bySensor: Boolean = true
 

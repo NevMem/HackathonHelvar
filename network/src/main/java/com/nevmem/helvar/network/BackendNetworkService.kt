@@ -3,7 +3,6 @@ package com.nevmem.helvar.network
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import okhttp3.Handshake
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -37,13 +36,13 @@ class BackendNetworkService {
         val call = backendService.move(from.toLowerCase(), to.toLowerCase())
         call.enqueue(object: Callback<ControlSequenceResult> {
             override fun onFailure(call: Call<ControlSequenceResult>, t: Throwable) {
+                move(from, to)
             }
 
             override fun onResponse(
                 call: Call<ControlSequenceResult>,
                 response: Response<ControlSequenceResult>) {
             }
-
         })
     }
 
@@ -52,6 +51,7 @@ class BackendNetworkService {
         call.enqueue(object: Callback<ControlSequenceResult> {
             override fun onFailure(call: Call<ControlSequenceResult>, t: Throwable) {
                 Log.d("debug", "Error: " + t.message.toString())
+                remoteControl(roomId, level, temperature)
             }
 
             override fun onResponse(
@@ -71,7 +71,6 @@ class BackendNetworkService {
             override fun onResponse(
                 call: Call<ControlSequenceResult>,
                 response: Response<ControlSequenceResult>) {
-
             }
         })
     }

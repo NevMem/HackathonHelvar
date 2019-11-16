@@ -14,6 +14,7 @@ import com.nevmem.helvarapp.utils.delayedOnUI
 import com.nevmem.helvarapp.view.SavingDialog
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.BehaviorSubject
 import kotlinx.android.synthetic.main.add_room_activity.*
 import javax.inject.Inject
 import kotlin.collections.HashMap
@@ -23,6 +24,7 @@ class AddRoomActivity : ListenableActivity() {
     companion object {
         const val maxSaveDelay = 5000L
         val roomProfileWifiAmount = 30
+        val minimalProfilingCount = 5
     }
 
     @Inject
@@ -37,6 +39,8 @@ class AddRoomActivity : ListenableActivity() {
     private val map = HashMap<String, Int>()
     private var savingStarted = false
     private var saved = false
+
+    private val marks = BehaviorSubject.create<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,9 +64,9 @@ class AddRoomActivity : ListenableActivity() {
         saveButton.isEnabled = false
         savingStarted = true
 
-        dialog = SavingDialog().also { it.show(supportFragmentManager, "saving-started") }
+        dialog = SavingDialog(marks).also { it.show(supportFragmentManager, "saving-started") }
 
-        if (marksReceived != 0) {
+        if (marksReceived >= minimalProfilingCount) {
             delayedOnUI(maxSaveDelay) {
                 doSaveRoom()
             }
@@ -100,6 +104,7 @@ class AddRoomActivity : ListenableActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 marksReceived += 1
+                marks.onNext(marksReceived)
                 it.forEach { pair ->
                     if (map.containsKey(pair.second)) {
                         map[pair.second] = map[pair.second]!! + pair.first
@@ -108,7 +113,7 @@ class AddRoomActivity : ListenableActivity() {
                     }
                 }
 
-                if (savingStarted) {
+                if (savingStarted && marksReceived >= minimalProfilingCount) {
                     doSaveRoom()
                 }
             }

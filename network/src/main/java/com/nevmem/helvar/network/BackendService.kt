@@ -20,6 +20,6 @@ interface BackendService {
     @GET("r/emote_smart_demo")
     fun remoteSmart(): Call<ControlSequenceResult>
 
-    @GET("/switch_on_entrance")
+    @GET("/remote_enter")
     fun switchOnEntrance(): Call<ControlSequenceResult>
 }
